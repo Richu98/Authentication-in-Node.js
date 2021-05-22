@@ -1,12 +1,14 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
+require("dotenv").config();  // used for Env file
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 const usersData = [];
+
+// Register
 app.post("/register", (req, res) => {
   if (
     req.body.username &&
@@ -23,8 +25,8 @@ app.post("/register", (req, res) => {
       }
     }
     if (found == false) {
-      let salt = crypto.randomBytes(16).toString("base64");
-      let hash = crypto
+      let salt = crypto.randomBytes(16).toString("base64");  // Creating a random salt
+      let hash = crypto                                      // hashing the password and converting to base64
         .createHmac("sha512", salt)
         .update(req.body.password)
         .digest("base64");
@@ -48,29 +50,14 @@ app.post("/register", (req, res) => {
   }
 });
 
+// Fetch profile
 app.get("/profiles", (req, res) => {
   const usersDataCopy = JSON.parse(JSON.stringify(usersData));
-  usersDataCopy.map((user) => delete user["password"]);
+  usersDataCopy.map((user) => delete user["password"]);             // Remove password on view all profile
   res.json(usersDataCopy);
 });
 
-const authenticationLogin = (req, res, next) => {
-  const authHeader = req.headers["Authorization"];
-  const token = authHeader.split(' ')[1];
-
-  if (token == null) return res.sendStatus(401);
-
-  jwt.verify(token, process.env.Secret_Key_For_JWT, (err, user) => {
-    console.log(err);
-
-    if (err) return res.sendStatus(403);
-
-    req.userInfo = user;
-
-    next();
-  });
-};
-
+// Login API
 app.post("/login", (req, res) => {
   if (req.body.username && req.body.password) {
     var found = false;
@@ -104,7 +91,7 @@ app.post("/login", (req, res) => {
       process.env.Secret_Key_For_JWT,
       { expiresIn: 60 * 60 }
     );
-
+// create jwt token
     if (!found) {
       res.status(400).json({ message: "username or password is incorrect!" });
     } else {
@@ -114,6 +101,26 @@ app.post("/login", (req, res) => {
   }
 });
 
+// Authentication verify middleware
+const authenticationLogin = (req, res, next) => {      
+  const authHeader = req.headers["Authorization"];
+  const token = authHeader.split(' ')[1];
+
+  if (token == null) return res.sendStatus(401);
+
+  jwt.verify(token, process.env.Secret_Key_For_JWT, (err, user) => {
+    console.log(err);
+
+    if (err) return res.sendStatus(403);
+
+    req.userInfo = user;
+
+    next();
+  });
+  // verify jwt token
+};
+
+// Update Profile
 app.put("/profile", authenticationLogin, (req, res) => {
   if (req.body.name && req.body.college && req.body["year-of-graduation"]) {
     const username = req.userInfo.username;
