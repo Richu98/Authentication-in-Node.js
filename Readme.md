@@ -1,6 +1,6 @@
 # Authentication In Node JS
 
-Simple Authentication App with the help [JWT](https://jwt.io/)
+Simple Authentication App with the help of [JWT](https://jwt.io/)
 
 ## Installation
 
